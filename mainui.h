@@ -2,6 +2,7 @@
 #define MAINUI_H
 
 #include <QWidget>
+#include <QWheelEvent>
 #include "mapfield.h"
 
 namespace Ui {
@@ -22,6 +23,9 @@ private slots:
 private:
     Ui::MainUI *ui;
     Map *map_scene;
+    double scale_factor_step;
+    void wheelEvent(QWheelEvent *we);
+    void mousePressEvent(QMouseEvent *e);
 };
 
 #endif // MAINUI_H

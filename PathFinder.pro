@@ -27,11 +27,13 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         mainui.cpp \
-    mapfield.cpp
+    mapfield.cpp \
+    cell.cpp
 
 HEADERS += \
         mainui.h \
-    mapfield.h
+    mapfield.h \
+    cell.h
 
 FORMS += \
         mainui.ui

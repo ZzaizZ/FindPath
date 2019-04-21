@@ -4,73 +4,9 @@
 
 #include <stdio.h>
 
-
-Cell::Cell(double h, double w) :
-    c_height(h),
-    c_width(w)
-{}
-
-QRectF Cell::boundingRect() const
-{
-    return QRectF(-c_width / 2, -c_height / 2, c_width, c_height);
-}
-
-EmptyCell::EmptyCell(double h, double w) :
-    Cell(h, w)
-{
-    c_type = CellType::Empty;
-}
-
-void EmptyCell::paint(QPainter *paint, const QStyleOptionGraphicsItem*, QWidget*)
-{
-    paint->setPen(Qt::black);
-    paint->setBrush(Qt::green);
-    paint->drawRect(QRectF(-c_width/2, -c_height/2, c_width, c_height));
-}
-
-WallCell::WallCell(double h, double w) :
-    Cell(h, w)
-{
-    c_type = CellType::Wall;
-}
-
-void WallCell::paint(QPainter *paint, const QStyleOptionGraphicsItem*, QWidget*)
-{
-    paint->setPen(Qt::black);
-    paint->setBrush(Qt::gray);
-    paint->drawRect(QRectF(-c_width/2, -c_height/2, c_width, c_height));
-}
-
-TextCell::TextCell(double h, double w, QString text) :
-    Cell(h, w)
-{
-    c_type = CellType::Start;
-    this->text = text;
-}
-
-void TextCell::paint(QPainter *paint, const QStyleOptionGraphicsItem*, QWidget*)
-{
-    paint->setPen(Qt::black);
-    paint->setBrush(Qt::red);
-    paint->drawRect(QRectF(-c_width/2, -c_height/2, c_width, c_height));
-    paint->drawText(0,0,text);
-}
-
-PathCell::PathCell(double h, double w) :
-    Cell(h, w)
-{
-    c_type = CellType::Path;
-}
-
-void PathCell::paint(QPainter *paint, const QStyleOptionGraphicsItem*, QWidget*)
-{
-    paint->setPen(Qt::black);
-    paint->setBrush(Qt::green);
-    paint->drawRect(QRectF(-c_width/2, -c_height/2, c_width, c_height));
-    paint->setPen(Qt::red);
-    QPointF c_center(0, 0);
-    paint->drawEllipse(c_center, c_width*0.3, c_height*0.3);
-}
+// TODO: Заменить размер ячеек (20) хотя бы на define
+// TODO: добавить метод, меняющий один тип ячейки на другой
+// TODO: Убрать повторяющийся код в перерисовке пути
 
 Map::Map(int H, int W, QObject *parent) :
     QGraphicsScene (parent),
@@ -78,34 +14,35 @@ Map::Map(int H, int W, QObject *parent) :
     m_h(H)
 {
     generateMap(m_w, m_h);
-    FindTheWay(QPoint(0,0), QPoint(m_w-1, m_h-1));
+    removeItem(map[0][0]);
+    removeItem(map[m_w-1][m_h-1]);
+    map[0][0] = new TextCell(20, 20, "A");
+    map[m_w-1][m_h-1] = new TextCell(20, 20, "B");
+    m_start = map[0][0];
+    m_end = map[m_w-1][m_h-1];
+    m_start->setPos(0,0);
+    m_end->setPos((m_w-1)*20,(m_h-1)*20);
+    addItem(m_start);
+    addItem(m_end);
+    FindTheWay(m_start->pos(), m_end->pos());
 }
 
 Map::~Map()
 {
-//    for (int y = 0; y < m_h; y++)
-//        delete[] map[y];
-//    delete[] map;
 }
 
-void Map::DrawMap()
-{
-    this->clear();
-    for (int y = 0; y < m_h; y++)
-        for (int x = 0; x < m_w; x++)
-            this->addItem(map[y][x]);
-}
-
-void Map::FindTheWay(QPoint p_start, QPoint p_end)
+void Map::FindTheWay(QPointF p_start, QPointF p_end)
 {
     adj_matrix = GetAdjMatrix(m_w, m_h, walls);
-    int n_start = p_start.y()*m_h + p_start.x();
-    int n_end = p_end.y()*m_h + p_end.x();
-    std::vector<int> path = BestPath(m_w*m_h, n_start, n_end);
+    int n_start = p_start.y()/20*m_h + p_start.x()/20;
+    int n_end = p_end.y()/20*m_h + p_end.x()/20;
+    path = BestPath(m_w*m_h, n_start, n_end);
     if (path[0] != PATH_DOES_NOT_EXISTS)
-            for (int step : path)
+            for (int s = 1; s < path.size()-1; s++)
             {
+                int step = path[s];
                 wall_coords_t wc = NumberToCoord(step, m_w, m_h);
+                removeItem(map[wc.y][wc.x]);
                 map[wc.y][wc.x] = new PathCell(20, 20);
                 map[wc.y][wc.x]->setPos(wc.x*20, wc.y*20);
                 addItem(map[wc.y][wc.x]);
@@ -139,7 +76,6 @@ std::vector<wall_coords_t> Map::generateMap(int W, int H)
                 wall_coords_t wall(x, y);
                 this->addItem(map[y][x]);
             }
-            printf("%i ", map[y][x]->pos().x());
         }
     }
     return walls;
@@ -255,4 +191,69 @@ std::vector<int> Map::BestPath(int n, int v_start, int v_end)
         result.push_back(PATH_DOES_NOT_EXISTS);
     std::reverse(result.begin(), result.end());
     return result;
+}
+
+void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
+{
+    // TODO: Убрать повторяющиеся куски кода
+    Cell *it = nullptr;
+    switch (e->button())
+    {
+    case Qt::LeftButton:
+        if ((it = dynamic_cast<Cell*>(itemAt(e->scenePos(),QTransform()))))
+        {
+            if (it->getType() != CellType::Wall)
+            {
+                QPointF pos = it->pos();
+                removeItem(it);
+                int x = static_cast<int>(it->pos().x()/20);
+                int y = static_cast<int>(it->pos().y()/20);
+                map[y][x] = new TextCell(20, 20, "A");
+                map[y][x]->setPos(pos);
+                if (path[0] != PATH_DOES_NOT_EXISTS)
+                    for (int s = 0; s < path.size()-1; s++)
+                    {
+                        int step = path[s];
+                        wall_coords_t wc = NumberToCoord(step, m_w, m_h);
+                        removeItem(map[wc.y][wc.x]);
+                        map[wc.y][wc.x] = new EmptyCell(20, 20);
+                        map[wc.y][wc.x]->setPos(wc.x*20, wc.y*20);
+                        addItem(map[wc.y][wc.x]);
+                    }
+                m_start = map[y][x];
+                FindTheWay(m_start->pos(), m_end->pos());
+                addItem(map[y][x]);
+            }
+        }
+        break;
+    case Qt::RightButton:
+        if ((it = dynamic_cast<Cell*>(itemAt(e->scenePos(),QTransform()))))
+        {
+            if (it->getType() != CellType::Wall)
+            {
+                QPointF pos = it->pos();
+                removeItem(it);
+                int x = static_cast<int>(it->pos().x()/20);
+                int y = static_cast<int>(it->pos().y()/20);
+                map[y][x] = new TextCell(20, 20, "B");
+                map[y][x]->setPos(pos);
+                if (path[0] != PATH_DOES_NOT_EXISTS)
+                    for (int s = 1; s < path.size(); s++)
+                    {
+                        int step = path[s];
+                        wall_coords_t wc = NumberToCoord(step, m_w, m_h);
+                        removeItem(map[wc.y][wc.x]);
+                        map[wc.y][wc.x] = new EmptyCell(20, 20);
+                        map[wc.y][wc.x]->setPos(wc.x*20, wc.y*20);
+                        addItem(map[wc.y][wc.x]);
+                    }
+                m_end = map[y][x];
+                FindTheWay(m_start->pos(), m_end->pos());
+                addItem(map[y][x]);
+            }
+        }
+        break;
+    default:
+        break;
+    }
 }
