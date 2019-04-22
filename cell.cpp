@@ -37,18 +37,16 @@ void WallCell::paint(QPainter *paint, const QStyleOptionGraphicsItem*, QWidget*)
 }
 
 TextCell::TextCell(double h, double w, QString text) :
-    Cell(h, w)
+    PathCell(h, w)
 {
     c_type = CellType::Start;
     this->text = text;
 }
 
-void TextCell::paint(QPainter *paint, const QStyleOptionGraphicsItem*, QWidget*)
+void TextCell::paint(QPainter *paint, const QStyleOptionGraphicsItem* p, QWidget* w)
 {
-    paint->setPen(Qt::black);
-    paint->setBrush(Qt::red);
-    paint->drawRect(QRectF(-c_width/2, -c_height/2, c_width, c_height));
-    paint->drawText(0,0,text);
+    PathCell::paint(paint, p, w);
+    paint->drawText(-c_width*0.15,c_height*0.25,text);
 }
 
 PathCell::PathCell(double h, double w) :

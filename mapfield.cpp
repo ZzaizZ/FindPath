@@ -3,10 +3,7 @@
 #include <QGraphicsEllipseItem>
 
 #include <stdio.h>
-
-// TODO: Заменить размер ячеек (20) хотя бы на define
-// TODO: добавить метод, меняющий один тип ячейки на другой
-// TODO: Убрать повторяющийся код в перерисовке пути
+#include <QMessageBox>
 
 Map::Map(int H, int W, QObject *parent) :
     QGraphicsScene (parent),
@@ -14,17 +11,8 @@ Map::Map(int H, int W, QObject *parent) :
     m_h(H)
 {
     generateMap(m_w, m_h);
-    removeItem(map[0][0]);
-    removeItem(map[m_w-1][m_h-1]);
-    map[0][0] = new TextCell(20, 20, "A");
-    map[m_w-1][m_h-1] = new TextCell(20, 20, "B");
-    m_start = map[0][0];
-    m_end = map[m_w-1][m_h-1];
-    m_start->setPos(0,0);
-    m_end->setPos((m_w-1)*20,(m_h-1)*20);
-    addItem(m_start);
-    addItem(m_end);
-    FindTheWay(m_start->pos(), m_end->pos());
+    m_start = nullptr;
+    m_end = nullptr;
 }
 
 Map::~Map()
@@ -33,26 +21,34 @@ Map::~Map()
 
 void Map::FindTheWay(QPointF p_start, QPointF p_end)
 {
-    adj_matrix = GetAdjMatrix(m_w, m_h, walls);
-    int n_start = p_start.y()/20*m_h + p_start.x()/20;
-    int n_end = p_end.y()/20*m_h + p_end.x()/20;
+    if (!m_start || !m_end)
+        return;
+    QPoint pint_start(p_start.x()/CELL_SIZE, p_start.y()/CELL_SIZE);
+    QPoint pint_end(p_end.x()/CELL_SIZE, p_end.y()/CELL_SIZE);
+    int n_start = pint_start.y()*(m_w) + pint_start.x();
+    int n_end = pint_end.y()*(m_w) + pint_end.x();
     path = BestPath(m_w*m_h, n_start, n_end);
-    if (path[0] != PATH_DOES_NOT_EXISTS)
-            for (int s = 1; s < path.size()-1; s++)
-            {
-                int step = path[s];
-                wall_coords_t wc = NumberToCoord(step, m_w, m_h);
-                removeItem(map[wc.y][wc.x]);
-                map[wc.y][wc.x] = new PathCell(20, 20);
-                map[wc.y][wc.x]->setPos(wc.x*20, wc.y*20);
-                addItem(map[wc.y][wc.x]);
-            }
-        else
-            printf("Path does not exist\n");
+    path_cell.resize(path.size());
+    for (int s = 0; s < path.size(); s++)
+    {
+        QPoint wc = path[s];
+        if (s == 0)
+            path_cell[s] = m_start;
+        if (s == path.size()-1)
+            path_cell[s] = m_end;
+        if (s > 0 && s < path.size()-1)
+        {
+            path_cell[s] = new PathCell(CELL_SIZE, CELL_SIZE);
+            path_cell[s]->setPos(wc.x()*CELL_SIZE, wc.y()*CELL_SIZE);
+        }
+        addItem(path_cell[s]);
+    }
 }
 
 std::vector<wall_coords_t> Map::generateMap(int W, int H)
 {
+    m_start = nullptr;
+    m_end = nullptr;
     srand(time(nullptr));
     map.resize(H);
     walls.clear();
@@ -61,27 +57,28 @@ std::vector<wall_coords_t> Map::generateMap(int W, int H)
         map[y].resize(W);
         for (int x = 0; x < W; x++)
         {
-            if (rand() % 7 == 1)
+            if (rand() % 3 == 1)
             {
-                map[y][x] = new WallCell(20, 20);
-                map[y][x]->setPos(x*20, y*20);
+                map[y][x] = new WallCell(CELL_SIZE, CELL_SIZE);
+                map[y][x]->setPos(x*CELL_SIZE, y*CELL_SIZE);
                 wall_coords_t wall(x, y);
                 this->addItem(map[y][x]);
                 walls.push_back(wall);
             }
             else
             {
-                map[y][x] = new EmptyCell(20, 20);
-                map[y][x]->setPos(x*20, y*20);
+                map[y][x] = new EmptyCell(CELL_SIZE, CELL_SIZE);
+                map[y][x]->setPos(x*CELL_SIZE, y*CELL_SIZE);
                 wall_coords_t wall(x, y);
                 this->addItem(map[y][x]);
             }
         }
     }
+    adj_matrix = GetAdjMatrix(W, H, walls);
+    m_w = W; m_h = H;
     return walls;
 }
 
-// TODO: ОПТИМИЗИРОВАТЬ?
 std::vector<std::vector<int>> Map::GetAdjMatrix(int W, int H, std::vector<wall_coords_t> walls)
 {
     size_t nodes_n = W*H;
@@ -91,7 +88,7 @@ std::vector<std::vector<int>> Map::GetAdjMatrix(int W, int H, std::vector<wall_c
         adj_matrix[cur_node].resize(nodes_n);
         std::fill(adj_matrix[cur_node].begin(), adj_matrix[cur_node].end(), 0);
     }
-    // генерация марицы инциденции для поля
+    // генерация марицы инциденции для поля без препятствий
     for (int y = 0; y < H; y++)
         for (int x = 0; x < W; x++)
         {
@@ -128,29 +125,28 @@ std::vector<std::vector<int>> Map::GetAdjMatrix(int W, int H, std::vector<wall_c
             adj_matrix[(wall.y+1)*W + wall.x][wall.y*W + wall.x] = 0;
         }
     }
-
     return adj_matrix;
 }
 
-// возвращает координаты N ячейки сетки (нумерация с 0)
+// возвращает координаты index ячейки сетки (нумерация с 0)
 // O(n^2)
-wall_coords_t Map::NumberToCoord(int index, int W, int H)
+QPoint Map::NumberToCoord(int index, int W, int H)
 {
     if (W*H-1 < index)
-        return wall_coords_t(-1, -1);
+        return QPoint(-1, -1);
     int counter = 0;
     for (int y = 0; y < H; y++)
         for (int x = 0; x < W; x++)
             if (index == counter)
-                return wall_coords_t(x, y);
+                return QPoint(x, y);
             else
                 counter++;
-    return wall_coords_t(-1, -1);
+    return QPoint(-1, -1);
 }
 
-// возвращает вектор индексов узлов, которые составляют путь от старта до финиша
+// возвращает вектор координат узлов, которые составляют путь от старта до финиша
 // (нумерация узлов с 0)
-std::vector<int> Map::BestPath(int n, int v_start, int v_end)
+std::vector<QPoint> Map::BestPath(int n, int v_start, int v_end)
 {
     std::vector<int> came_from(n, UNDEF);
     std::queue<int> q;
@@ -175,27 +171,36 @@ std::vector<int> Map::BestPath(int n, int v_start, int v_end)
             }
         }
     }
-    std::vector<int> result;
+    std::vector<QPoint> result(0);
 
     if (path_exists)
     {
         int current = v_end;
         while (current != v_start)
         {
-            result.push_back(current);
+            result.push_back(NumberToCoord(current, m_w, m_h));
             current = came_from[current];
         }
-        result.push_back(v_start);
+        result.push_back(NumberToCoord(v_start, m_w, m_h));
     }
     else
-        result.push_back(PATH_DOES_NOT_EXISTS);
+    {
+        result.push_back(NumberToCoord(v_start, m_w, m_h));
+        result.push_back(NumberToCoord(v_end, m_w, m_h));
+    }
     std::reverse(result.begin(), result.end());
     return result;
 }
 
+// стирает текущий путь
+void Map::ClearPath()
+{
+    for (int s = 0; s < path_cell.size(); s++)
+        removeItem(path_cell[s]);
+}
+
 void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
 {
-    // TODO: Убрать повторяющиеся куски кода
     Cell *it = nullptr;
     switch (e->button())
     {
@@ -204,25 +209,28 @@ void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
         {
             if (it->getType() != CellType::Wall)
             {
-                QPointF pos = it->pos();
-                removeItem(it);
-                int x = static_cast<int>(it->pos().x()/20);
-                int y = static_cast<int>(it->pos().y()/20);
-                map[y][x] = new TextCell(20, 20, "A");
-                map[y][x]->setPos(pos);
-                if (path[0] != PATH_DOES_NOT_EXISTS)
-                    for (int s = 0; s < path.size()-1; s++)
-                    {
-                        int step = path[s];
-                        wall_coords_t wc = NumberToCoord(step, m_w, m_h);
-                        removeItem(map[wc.y][wc.x]);
-                        map[wc.y][wc.x] = new EmptyCell(20, 20);
-                        map[wc.y][wc.x]->setPos(wc.x*20, wc.y*20);
-                        addItem(map[wc.y][wc.x]);
-                    }
-                m_start = map[y][x];
-                FindTheWay(m_start->pos(), m_end->pos());
-                addItem(map[y][x]);
+                if (m_start == nullptr)
+                {
+                    QPointF pos = it->pos();
+                    removeItem(it);
+                    int x = static_cast<int>(it->pos().x()/CELL_SIZE);
+                    int y = static_cast<int>(it->pos().y()/CELL_SIZE);
+                    map[y][x] = new TextCell(CELL_SIZE, CELL_SIZE, "A");
+                    map[y][x]->setPos(pos);
+                    m_start = map[y][x];
+                    addItem(map[y][x]);
+                }
+                else
+                {
+                    if (path.size() != 0)
+                        ClearPath();
+                    QPointF pos = it->pos();
+                    it->setPos(m_start->pos());
+                    m_start->setPos(pos);
+                }
+                if (m_end != nullptr)
+                    FindTheWay(QPointF(m_start->pos().x(), m_start->pos().y()),
+                               QPointF(m_end->pos().x(), m_end->pos().y()));
             }
         }
         break;
@@ -231,25 +239,28 @@ void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
         {
             if (it->getType() != CellType::Wall)
             {
-                QPointF pos = it->pos();
-                removeItem(it);
-                int x = static_cast<int>(it->pos().x()/20);
-                int y = static_cast<int>(it->pos().y()/20);
-                map[y][x] = new TextCell(20, 20, "B");
-                map[y][x]->setPos(pos);
-                if (path[0] != PATH_DOES_NOT_EXISTS)
-                    for (int s = 1; s < path.size(); s++)
-                    {
-                        int step = path[s];
-                        wall_coords_t wc = NumberToCoord(step, m_w, m_h);
-                        removeItem(map[wc.y][wc.x]);
-                        map[wc.y][wc.x] = new EmptyCell(20, 20);
-                        map[wc.y][wc.x]->setPos(wc.x*20, wc.y*20);
-                        addItem(map[wc.y][wc.x]);
-                    }
-                m_end = map[y][x];
-                FindTheWay(m_start->pos(), m_end->pos());
-                addItem(map[y][x]);
+                if (m_end == nullptr)
+                {
+                    QPointF pos = it->pos();
+                    removeItem(it);
+                    int x = static_cast<int>(it->pos().x()/CELL_SIZE);
+                    int y = static_cast<int>(it->pos().y()/CELL_SIZE);
+                    map[y][x] = new TextCell(CELL_SIZE, CELL_SIZE, "B");
+                    map[y][x]->setPos(pos);
+                    m_end = map[y][x];
+                    addItem(map[y][x]);
+                }
+                else
+                {
+                    if (path.size() != 0)
+                        ClearPath();
+                    QPointF pos = it->pos();
+                    it->setPos(m_end->pos());
+                    m_end->setPos(pos);
+                }
+                if (m_start != nullptr)
+                    FindTheWay(QPointF(m_start->pos().x(), m_start->pos().y()),
+                               QPointF(m_end->pos().x(), m_end->pos().y()));
             }
         }
         break;

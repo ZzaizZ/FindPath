@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QWheelEvent>
+#include <QSettings>
 #include "mapfield.h"
 
 namespace Ui {
@@ -20,10 +21,14 @@ public:
 private slots:
     void on_btn_Generate_clicked();
 
+    void on_pushButton_clicked();
+
 private:
     Ui::MainUI *ui;
     Map *map_scene;
+    QSettings *settings;
     double scale_factor_step;
+    bool verifyInput();
     void wheelEvent(QWheelEvent *we);
     void mousePressEvent(QMouseEvent *e);
 };

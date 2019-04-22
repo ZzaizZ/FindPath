@@ -14,6 +14,7 @@
 #define INF 99 // обозначение недостижимой вершины
 #define UNDEF -1 // обозначение ещё не посещённой вершины
 #define PATH_DOES_NOT_EXISTS -10 // единственное значение вектора пути, если цель недостижима
+#define CELL_SIZE 20
 
 typedef int** grid_t;
 // структрура координат расположения стены
@@ -39,13 +40,15 @@ private:
     std::vector<std::vector<Cell*>> map; // двумерный массив ячеек
     std::vector<wall_coords_t> walls; // массив координат со стенами
     std::vector<std::vector<int>> adj_matrix; // матрица инциденции для поля
-    std::vector<int> path; // номера ячеек пути
+    std::vector<QPoint> path; // номера ячеек пути
+    std::vector<Cell*> path_cell; // ячейки пути
     int m_w, m_h; // размеры поля в клетках
     // генерация матрицы инциденции для полученного поля
     std::vector<std::vector<int>> GetAdjMatrix(int W, int H, std::vector<wall_coords_t> walls);
     // перевод номера узла графа в координаты ячейки
-    wall_coords_t NumberToCoord(int index, int W, int H);
-    std::vector<int> BestPath(int n, int v_start, int v_end); // поиск в ширину
+    QPoint NumberToCoord(int index, int W, int H);
+    std::vector<QPoint> BestPath(int n, int v_start, int v_end); // поиск в ширину
+    void ClearPath(); // очистка вектора ячеек пути
     Cell *m_start;
     Cell *m_end;
 protected:

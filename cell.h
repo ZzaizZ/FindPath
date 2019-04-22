@@ -42,21 +42,21 @@ protected:
     virtual void paint(QPainter *paint, const QStyleOptionGraphicsItem*, QWidget*);
 };
 
-class TextCell : public Cell
-{
-public:
-    TextCell(double h, double w, QString text);
-protected:
-    QString text;
-    virtual void paint(QPainter *paint, const QStyleOptionGraphicsItem*, QWidget*);
-};
-
 class PathCell : public Cell
 {
 public:
     PathCell(double h, double w);
 protected:
     virtual void paint(QPainter *paint, const QStyleOptionGraphicsItem*, QWidget*);
+};
+
+class TextCell : public PathCell
+{
+public:
+    TextCell(double h, double w, QString text);
+protected:
+    QString text;
+    virtual void paint(QPainter *paint, const QStyleOptionGraphicsItem*p, QWidget*w);
 };
 
 #endif // CELL_H
