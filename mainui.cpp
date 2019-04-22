@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <QScreen>
 #include <QMessageBox>
+#include <QValidator>
 
 // TODO: Fix size error
 
@@ -29,6 +30,8 @@ MainUI::MainUI(QWidget *parent) :
     scale_factor_step = 0.1;
     map_scene = new Map(ui->led_H->text().toInt(), ui->led_W->text().toInt(), ui->grv_Map);
     ui->grv_Map->setScene(map_scene);
+    ui->led_H->setValidator(new QIntValidator(2, 10000));
+    ui->led_W->setValidator(new QIntValidator(2, 10000));
 }
 
 MainUI::~MainUI()
@@ -39,6 +42,7 @@ MainUI::~MainUI()
     settings->setValue("window/height", height());
     settings->setValue("map/x_cell", ui->led_W->text());
     settings->setValue("map/y_cell", ui->led_H->text());
+    settings->sync();
     delete settings;
     delete map_scene;
     delete ui;
@@ -77,7 +81,7 @@ void MainUI::mousePressEvent(QMouseEvent *e)
         ui->grv_Map->resetMatrix();
 }
 
-void MainUI::on_pushButton_clicked()
+void MainUI::on_btn_Help_clicked()
 {
     QString help_text = "\nЗелёные поля - доступные поля для маршрута\n\
 Серые поля - преграды, недоступные для прохождения\n\
