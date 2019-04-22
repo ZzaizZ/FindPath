@@ -60,6 +60,8 @@ bool MainUI::verifyInput()
 
 void MainUI::on_btn_Generate_clicked()
 {
+    if (!verifyInput())
+        return;
     map_scene->clear();
     map_scene->generateMap(ui->led_W->text().toInt(), ui->led_H->text().toInt());
     ui->grv_Map->setSceneRect(0, 0,
@@ -69,10 +71,13 @@ void MainUI::on_btn_Generate_clicked()
 
 void MainUI::wheelEvent(QWheelEvent *we)
 {
-    if (we->delta() < 0)
-        ui->grv_Map->scale(1-scale_factor_step, 1-scale_factor_step);
-    if (we->delta() > 0)
-        ui->grv_Map->scale(1+scale_factor_step, 1+scale_factor_step);
+    if (we->modifiers() & Qt::ControlModifier)
+    {
+        if (we->delta() < 0)
+            ui->grv_Map->scale(1-scale_factor_step, 1-scale_factor_step);
+        if (we->delta() > 0)
+            ui->grv_Map->scale(1+scale_factor_step, 1+scale_factor_step);
+    }
 }
 
 void MainUI::mousePressEvent(QMouseEvent *e)
@@ -87,7 +92,7 @@ void MainUI::on_btn_Help_clicked()
 Серые поля - преграды, недоступные для прохождения\n\
 ПКМ - установка начальной точки маршрута\n\
 ЛКМ - установка конечной точки маршрута\n\
-Колёсико мыши (прокрутка) - масштабирование поля\n\
+Ctrl + колёсико мыши (прокрутка) - масштабирование поля\n\
 Колёсико мыши (клик) - установка стандартного размера";
     QMessageBox::information(nullptr, "Помощь", help_text);
 }
