@@ -29,7 +29,7 @@ private:
     std::vector<Cell*> path_cell; // ячейки пути
     int m_w, m_h; // размеры поля в клетках
     // генерация матрицы инциденции для полученного поля
-    std::vector<std::vector<int>> GetAdjMatrix(int W, int H, std::vector<QPoint> walls);
+    void GetAdjMatrix(int W, int H, std::vector<QPoint> walls);
     // перевод номера узла графа в координаты ячейки
     QPoint NumberToCoord(int index, int W, int H);
     std::vector<QPoint> BestPath(int n, int v_start, int v_end); // поиск в ширину

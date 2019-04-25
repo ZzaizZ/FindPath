@@ -15,7 +15,7 @@ MainUI::MainUI(QWidget *parent) :
     ui->setupUi(this);
     settings = new QSettings("settings.ini", QSettings::IniFormat);
     setMaximumHeight(QGuiApplication::primaryScreen()->size().height());
-    setMaximumWidth(QGuiApplication::primaryScreen()->size().height());
+    setMaximumWidth(QGuiApplication::primaryScreen()->size().width());
     setMinimumHeight(100);
     setMinimumWidth(100);
     move(settings->value("window/x_pos", QGuiApplication::primaryScreen()->size().width()/3).toInt(),
@@ -25,13 +25,16 @@ MainUI::MainUI(QWidget *parent) :
     ui->led_W->setText(settings->value("map/x_cell", 10).toString());
     ui->led_H->setText(settings->value("map/y_cell", 10).toString());
     if (!verifyInput())
+    {
         ui->led_H->setText("10");
         ui->led_W->setText("10");
+    }
     scale_factor_step = 0.1;
     map_scene = new Map(ui->led_H->text().toInt(), ui->led_W->text().toInt(), ui->grv_Map);
     ui->grv_Map->setScene(map_scene);
-    ui->led_H->setValidator(new QIntValidator(2, 10000));
-    ui->led_W->setValidator(new QIntValidator(2, 10000));
+    QIntValidator coord_valid(2, 5000);
+    ui->led_H->setValidator(&coord_valid);
+    ui->led_W->setValidator(&coord_valid);
 }
 
 MainUI::~MainUI()
@@ -50,7 +53,8 @@ MainUI::~MainUI()
 
 bool MainUI::verifyInput()
 {
-    if (ui->led_H->text().toInt() >= 100 && ui->led_W->text().toInt() >= 100)
+    if ((ui->led_H->text().toInt() * ui->led_W->text().toInt() > 10000) ||
+            (ui->led_H->text().toInt() < 2 && ui->led_W->text().toInt() < 2))
     {
         QMessageBox::critical(nullptr, "Ошибка!", "Ошибка задания размера поля!\n Размеры поля не должны превышать 100х100!");
         return false;
@@ -90,8 +94,8 @@ void MainUI::on_btn_Help_clicked()
 {
     QString help_text = "\nЗелёные поля - доступные поля для маршрута\n\
 Серые поля - преграды, недоступные для прохождения\n\
-ПКМ - установка начальной точки маршрута\n\
-ЛКМ - установка конечной точки маршрута\n\
+ЛКМ - установка начальной точки маршрута\n\
+ПКМ - установка конечной точки маршрута\n\
 Ctrl + колёсико мыши (прокрутка) - масштабирование поля\n\
 Колёсико мыши (клик) - установка стандартного размера";
     QMessageBox::information(nullptr, "Помощь", help_text);

@@ -12,8 +12,6 @@ Map::Map(int H, int W, QObject *parent) :
     m_h(H)
 {
     generateMap(m_w, m_h);
-    m_start = nullptr;
-    m_end = nullptr;
 }
 
 Map::~Map()
@@ -47,11 +45,11 @@ void Map::generateMap(int W, int H)
             }
         }
     }
-    adj_matrix = GetAdjMatrix(W, H, walls);
+    GetAdjMatrix(W, H, walls);
     m_w = W; m_h = H;
 }
 
-std::vector<std::vector<int>> Map::GetAdjMatrix(int W, int H, std::vector<QPoint> walls)
+void Map::GetAdjMatrix(int W, int H, std::vector<QPoint> walls)
 {
     size_t nodes_n = W*H;
     adj_matrix.resize(nodes_n);
@@ -97,23 +95,14 @@ std::vector<std::vector<int>> Map::GetAdjMatrix(int W, int H, std::vector<QPoint
             adj_matrix[(wall.y()+1)*W + wall.x()][wall.y()*W + wall.x()] = 0;
         }
     }
-    return adj_matrix;
 }
 
 // возвращает координаты index ячейки сетки (нумерация с 0)
-// O(n^2)
 QPoint Map::NumberToCoord(int index, int W, int H)
 {
     if (W*H-1 < index)
         return QPoint(-1, -1);
-    int counter = 0;
-    for (int y = 0; y < H; y++)
-        for (int x = 0; x < W; x++)
-            if (index == counter)
-                return QPoint(x, y);
-            else
-                counter++;
-    return QPoint(-1, -1);
+    return QPoint(index%W, index/W);
 }
 
 void Map::FindTheWay(QPointF p_start, QPointF p_end)
@@ -128,11 +117,7 @@ void Map::FindTheWay(QPointF p_start, QPointF p_end)
     path_cell.resize(path.size());
     for (size_t s = 1; s < path.size()-1; s++)
     {
-        QPoint wc = path[s];
-        if (s == 0)
-            path_cell[s] = m_start;
-        if (s == path.size()-1)
-            path_cell[s] = m_end;
+        QPoint wc = path[s];        
         if (s > 0 && s < path.size()-1)
         {
             path_cell[s] = new PathCell(CELL_SIZE, CELL_SIZE);
