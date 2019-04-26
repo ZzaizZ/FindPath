@@ -6,6 +6,8 @@
 #include <QMessageBox>
 #include <QValidator>
 
+#include <QThread>
+
 // TODO: Fix size error
 
 MainUI::MainUI(QWidget *parent) :
@@ -30,7 +32,7 @@ MainUI::MainUI(QWidget *parent) :
         ui->led_W->setText("10");
     }
     scale_factor_step = 0.1;
-    map_scene = new Map(ui->led_H->text().toInt(), ui->led_W->text().toInt(), ui->grv_Map);
+    map_scene = new Map(ui->led_H->text().toInt(), ui->led_W->text().toInt(), 0);
     ui->grv_Map->setScene(map_scene);
     QIntValidator coord_valid(2, 5000);
     ui->led_H->setValidator(&coord_valid);
@@ -70,7 +72,6 @@ void MainUI::on_btn_Generate_clicked()
     map_scene->generateMap(ui->led_W->text().toInt(), ui->led_H->text().toInt());
     ui->grv_Map->setSceneRect(0, 0,
                               ui->led_W->text().toInt()*20, ui->led_H->text().toInt()*20);
-    map_scene->FindTheWay(QPoint(0,0), QPoint(ui->led_H->text().toInt()-1, ui->led_W->text().toInt()-1));
 }
 
 void MainUI::wheelEvent(QWheelEvent *we)
