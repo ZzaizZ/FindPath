@@ -8,7 +8,7 @@
 
 #include <QThread>
 
-// TODO: Fix size error
+
 
 MainUI::MainUI(QWidget *parent) :
     QWidget(parent),
@@ -32,7 +32,7 @@ MainUI::MainUI(QWidget *parent) :
         ui->led_W->setText("10");
     }
     scale_factor_step = 0.1;
-    map_scene = new Map(ui->led_H->text().toInt(), ui->led_W->text().toInt(), 0);
+    map_scene = new Map(ui->led_H->text().toInt(), ui->led_W->text().toInt(), nullptr);
     ui->grv_Map->setScene(map_scene);
     QIntValidator coord_valid(2, 5000);
     ui->led_H->setValidator(&coord_valid);
@@ -70,8 +70,8 @@ void MainUI::on_btn_Generate_clicked()
         return;
     map_scene->clear();
     map_scene->generateMap(ui->led_W->text().toInt(), ui->led_H->text().toInt());
-    ui->grv_Map->setSceneRect(0, 0,
-                              ui->led_W->text().toInt()*20, ui->led_H->text().toInt()*20);
+    ui->grv_Map->setSceneRect(-CELL_SIZE, -CELL_SIZE,
+                              ui->led_W->text().toInt()*CELL_SIZE+CELL_SIZE, ui->led_H->text().toInt()*CELL_SIZE+CELL_SIZE);
 }
 
 void MainUI::wheelEvent(QWheelEvent *we)

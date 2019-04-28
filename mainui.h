@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QWheelEvent>
 #include <QSettings>
+#include <QThread>
 #include "mapfield.h"
 
 namespace Ui {
@@ -26,6 +27,7 @@ private:
     Ui::MainUI *ui;
     Map *map_scene;
     QSettings *settings;
+    QThread thread_map;
     double scale_factor_step;
     bool verifyInput();
     void wheelEvent(QWheelEvent *we);

@@ -106,8 +106,5 @@ void PathFinder::findTheWay(QPointF p_start, QPointF p_end)
         }
     }
     else
-    {
-//        emit addPathPoint(NumberToCoord(n_start));
-//        emit addPathPoint(NumberToCoord(n_end));
-    }
+        emit signalPathNotFound();
 }

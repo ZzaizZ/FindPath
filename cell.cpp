@@ -39,7 +39,7 @@ void WallCell::paint(QPainter *paint, const QStyleOptionGraphicsItem*, QWidget*)
 TextCell::TextCell(double h, double w, QString text) :
     PathCell(h, w)
 {
-    c_type = CellType::Start;
+    c_type = CellType::Text;
     this->text = text;
 }
 

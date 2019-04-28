@@ -31,8 +31,9 @@ public:
 public slots:
     void findTheWay(QPointF p_start, QPointF p_end);
     void drawPathCell(QPoint pathCell);
+    void errorPathNotFound();
 private:
-    PathFinder *finder;
+    PathFinder *finder {nullptr};
     std::vector<std::vector<Cell*>> map; // двумерный массив ячеек поля (для отрисовки)
     std::vector<QPoint> walls; // массив координат со стенами
     std::vector<QPoint> path; // координаты ячеек пути
@@ -43,6 +44,7 @@ private:
     void clearPath(); // очистка вектора ячеек пути
     Cell *m_start;
     Cell *m_end;
+    QThread thread_path_finder;
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *e);
 signals:

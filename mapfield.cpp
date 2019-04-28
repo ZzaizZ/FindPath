@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <QMessageBox>
 #include <QTime>
+#include <QThread>
 
 #include <QDebug>
 
@@ -19,6 +20,7 @@ Map::Map(int H, int W, QObject *parent) :
 
 Map::~Map()
 {
+    thread_path_finder.quit();
     if (finder)
         delete finder;
 }
@@ -50,10 +52,22 @@ void Map::generateMap(int W, int H)
             }
         }
     }
-    finder = new PathFinder(W, H, walls);    
+    if (finder)
+    {
+        disconnect(this, &Map::signalFindTheWay, finder, &PathFinder::findTheWay);
+        disconnect(finder, &PathFinder::signalAddPathPoint, this, &Map::drawPathCell);
+        disconnect(finder, &PathFinder::signalPathNotFound, this, &Map::errorPathNotFound);
+        thread_path_finder.quit();
+        delete finder;
+        finder = nullptr;
+    }
+    finder = new PathFinder(W, H, walls);
     connect(this, &Map::signalFindTheWay, finder, &PathFinder::findTheWay);
     connect(finder, &PathFinder::signalAddPathPoint, this, &Map::drawPathCell);
-    m_w = W; m_h = H;    
+    connect(finder, &PathFinder::signalPathNotFound, this, &Map::errorPathNotFound);
+    finder->moveToThread(&thread_path_finder);
+    thread_path_finder.start();
+    m_w = W; m_h = H;
 }
 
 void Map::drawPathCell(QPoint pathCell)
@@ -72,7 +86,7 @@ void Map::findTheWay(QPointF p_start, QPointF p_end)
     path_cell.resize(path.size());
     for (size_t s = 1; s < path.size()-1; s++)
     {
-        QPoint wc = path[s];        
+        QPoint wc = path[s];
         if (s > 0 && s < path.size()-1)
         {
             path_cell[s] = new PathCell(CELL_SIZE, CELL_SIZE);
@@ -92,6 +106,11 @@ void Map::clearPath()
     update();
 }
 
+void Map::errorPathNotFound()
+{
+    QMessageBox::information(nullptr, "Внимание!", "Не существует пути между заданными координатами");
+}
+
 void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
 {
     Cell *it = nullptr;
@@ -100,6 +119,8 @@ void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
     case Qt::LeftButton:
         if ((it = dynamic_cast<Cell*>(itemAt(e->scenePos(),QTransform()))))
         {
+            if (!path_cell.empty())
+                clearPath();
             if (it->getType() != CellType::Wall)
             {
                 if (m_start == nullptr)
@@ -111,20 +132,20 @@ void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
                 }
                 else
                 {
-                    if (!path_cell.empty())
-                        clearPath();
                     QPointF pos = it->pos();
                     m_start->setPos(pos);
                 }
                 if (m_end != nullptr)
                     emit signalFindTheWay(QPointF(m_start->pos().x(), m_start->pos().y()),
-                                    QPointF(m_end->pos().x(), m_end->pos().y()));
+                                          QPointF(m_end->pos().x(), m_end->pos().y()));
             }
         }
         break;
     case Qt::RightButton:
         if ( (it = dynamic_cast<Cell*>(itemAt(e->scenePos(),QTransform()))) )
         {
+            if (!path_cell.empty())
+                clearPath();
             if (it->getType() != CellType::Wall)
             {
                 if (m_end == nullptr)
@@ -136,14 +157,12 @@ void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
                 }
                 else
                 {
-                    if (!path_cell.empty())
-                        clearPath();
                     QPointF pos = it->pos();
                     m_end->setPos(pos);
                 }
                 if (m_start != nullptr)
                     emit signalFindTheWay(QPointF(m_start->pos().x(), m_start->pos().y()),
-                                    QPointF(m_end->pos().x(), m_end->pos().y()));
+                                          QPointF(m_end->pos().x(), m_end->pos().y()));
             }
         }
         break;

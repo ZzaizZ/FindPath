@@ -9,8 +9,7 @@ enum class CellType
 {
     Empty,
     Wall,
-    Start,
-    End,
+    Text,
     Path
 };
 

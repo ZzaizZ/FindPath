@@ -27,6 +27,7 @@ private:
 
 signals:
     void signalAddPathPoint(QPoint newPoint);
+    void signalPathNotFound();
 };
 
 #endif // PATHFINDER_H
