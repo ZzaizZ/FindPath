@@ -9,7 +9,7 @@
 #define UNDEF -1 // обозначение ещё не посещённой вершины
 #define CELL_SIZE 20
 
-class PathFinder : QObject
+class PathFinder : public QObject
 {
 
     Q_OBJECT
@@ -17,16 +17,16 @@ class PathFinder : QObject
 public:
     PathFinder(int w, int h, std::vector<QPoint> walls);
 public slots:
-    std::vector<QPoint> findTheWay(QPointF p_start, QPointF p_end);
+    void findTheWay(QPointF p_start, QPointF p_end);
 private:
-    int W, H;
+    int map_width, map_height;
     std::vector<QPoint> walls;
     std::vector<std::vector<int>> adj_matrix; // матрица инциденции для поля
-    void GetAdjMatrix();
-    QPoint NumberToCoord(int index);
+    void getAdjMatrix();
+    QPoint numberToCoord(int index);
 
 signals:
-    void addPathPoint(QPoint newPoint);
+    void signalAddPathPoint(QPoint newPoint);
 };
 
 #endif // PATHFINDER_H

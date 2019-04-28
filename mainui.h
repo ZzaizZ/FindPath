@@ -20,7 +20,6 @@ public:
 
 private slots:
     void on_btn_Generate_clicked();
-
     void on_btn_Help_clicked();
 
 private:

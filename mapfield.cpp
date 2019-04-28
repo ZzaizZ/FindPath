@@ -6,6 +6,8 @@
 #include <QMessageBox>
 #include <QTime>
 
+#include <QDebug>
+
 
 Map::Map(int H, int W, QObject *parent) :
     QGraphicsScene (parent),
@@ -48,15 +50,25 @@ void Map::generateMap(int W, int H)
             }
         }
     }
-    finder = new PathFinder(W, H, walls);
+    finder = new PathFinder(W, H, walls);    
+    connect(this, &Map::signalFindTheWay, finder, &PathFinder::findTheWay);
+    connect(finder, &PathFinder::signalAddPathPoint, this, &Map::drawPathCell);
     m_w = W; m_h = H;    
 }
 
-void Map::FindTheWay(QPointF p_start, QPointF p_end)
+void Map::drawPathCell(QPoint pathCell)
+{
+    path_cell.push_back(new PathCell(CELL_SIZE, CELL_SIZE));
+    path_cell.back()->setPos(pathCell.x()*CELL_SIZE, pathCell.y()*CELL_SIZE);
+    addItem(path_cell.back());
+}
+
+void Map::findTheWay(QPointF p_start, QPointF p_end)
 {
     if (!m_start || !m_end)
         return;
-    path = finder->findTheWay(p_start, p_end);
+
+    finder->findTheWay(p_start, p_end);
     path_cell.resize(path.size());
     for (size_t s = 1; s < path.size()-1; s++)
     {
@@ -72,10 +84,12 @@ void Map::FindTheWay(QPointF p_start, QPointF p_end)
 
 // стирает текущий путь
 // кроме точек старта и финиша
-void Map::ClearPath()
+void Map::clearPath()
 {
-    for (int s = 1; s < path_cell.size()-1; s++)
+    for (int s = 0; s < path_cell.size(); s++)
         removeItem(path_cell[s]);
+    path_cell.clear();
+    update();
 }
 
 void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
@@ -97,14 +111,14 @@ void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
                 }
                 else
                 {
-                    if (path.size() != 0)
-                        ClearPath();
+                    if (!path_cell.empty())
+                        clearPath();
                     QPointF pos = it->pos();
                     m_start->setPos(pos);
                 }
                 if (m_end != nullptr)
-                    FindTheWay(QPointF(m_start->pos().x(), m_start->pos().y()),
-                               QPointF(m_end->pos().x(), m_end->pos().y()));
+                    emit signalFindTheWay(QPointF(m_start->pos().x(), m_start->pos().y()),
+                                    QPointF(m_end->pos().x(), m_end->pos().y()));
             }
         }
         break;
@@ -122,14 +136,14 @@ void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
                 }
                 else
                 {
-                    if (path.size() != 0)
-                        ClearPath();
+                    if (!path_cell.empty())
+                        clearPath();
                     QPointF pos = it->pos();
                     m_end->setPos(pos);
                 }
                 if (m_start != nullptr)
-                    FindTheWay(QPointF(m_start->pos().x(), m_start->pos().y()),
-                               QPointF(m_end->pos().x(), m_end->pos().y()));
+                    emit signalFindTheWay(QPointF(m_start->pos().x(), m_start->pos().y()),
+                                    QPointF(m_end->pos().x(), m_end->pos().y()));
             }
         }
         break;
