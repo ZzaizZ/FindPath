@@ -33,6 +33,8 @@ MainUI::MainUI(QWidget *parent) :
     }
     scale_factor_step = 0.1;
     map_scene = new Map(ui->led_H->text().toInt(), ui->led_W->text().toInt(), nullptr);
+    connect(map_scene, &Map::signalGenerationStatusChanged, this, &MainUI::switchActiveButtons);
+    connect(map_scene, &Map::signalSearchstatusChanged, this, &MainUI::switchActiveButtons);
     ui->grv_Map->setScene(map_scene);
     QIntValidator coord_valid(2, 5000);
     ui->led_H->setValidator(&coord_valid);
@@ -68,10 +70,19 @@ void MainUI::on_btn_Generate_clicked()
 {
     if (!verifyInput())
         return;
+//    ui->btn_Generate->setEnabled(false);
     map_scene->clear();
     map_scene->generateMap(ui->led_W->text().toInt(), ui->led_H->text().toInt());
     ui->grv_Map->setSceneRect(-CELL_SIZE, -CELL_SIZE,
                               ui->led_W->text().toInt()*CELL_SIZE+CELL_SIZE, ui->led_H->text().toInt()*CELL_SIZE+CELL_SIZE);
+}
+
+void MainUI::switchActiveButtons(bool in_process)
+{
+    if (in_process)
+        ui->btn_Generate->setEnabled(false);
+    else
+        ui->btn_Generate->setEnabled(true);
 }
 
 void MainUI::wheelEvent(QWheelEvent *we)

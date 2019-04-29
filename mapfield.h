@@ -32,6 +32,7 @@ public slots:
     void findTheWay(QPointF p_start, QPointF p_end);
     void drawPathCell(QPoint pathCell);
     void errorPathNotFound();
+    void statusSearch(bool in_process);
 private:
     PathFinder *finder {nullptr};
     std::vector<std::vector<Cell*>> map; // двумерный массив ячеек поля (для отрисовки)
@@ -49,6 +50,8 @@ protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *e);
 signals:
     void signalFindTheWay(QPointF start, QPointF end);
+    void signalSearchstatusChanged(bool in_process);
+    void signalGenerationStatusChanged(bool in_process);
 };
 
 

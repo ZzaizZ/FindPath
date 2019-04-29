@@ -65,6 +65,7 @@ void PathFinder::getAdjMatrix()
 
 void PathFinder::findTheWay(QPointF p_start, QPointF p_end)
 {
+    emit signalSearchstatusChanged(true);
     QPoint pint_start(p_start.x()/CELL_SIZE, p_start.y()/CELL_SIZE);
     QPoint pint_end(p_end.x()/CELL_SIZE, p_end.y()/CELL_SIZE);
     int n_start = pint_start.y()*(map_width) + pint_start.x();
@@ -107,4 +108,5 @@ void PathFinder::findTheWay(QPointF p_start, QPointF p_end)
     }
     else
         emit signalPathNotFound();
+    emit signalSearchstatusChanged(false);
 }

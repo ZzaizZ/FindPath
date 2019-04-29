@@ -27,6 +27,7 @@ Map::~Map()
 
 void Map::generateMap(int W, int H)
 {
+    emit signalGenerationStatusChanged(true);
     m_start = nullptr;
     m_end = nullptr;
     qsrand(QTime::currentTime().msec());
@@ -57,6 +58,7 @@ void Map::generateMap(int W, int H)
         disconnect(this, &Map::signalFindTheWay, finder, &PathFinder::findTheWay);
         disconnect(finder, &PathFinder::signalAddPathPoint, this, &Map::drawPathCell);
         disconnect(finder, &PathFinder::signalPathNotFound, this, &Map::errorPathNotFound);
+        disconnect(finder, &PathFinder::signalSearchstatusChanged, this, &Map::statusSearch);
         thread_path_finder.quit();
         delete finder;
         finder = nullptr;
@@ -65,9 +67,11 @@ void Map::generateMap(int W, int H)
     connect(this, &Map::signalFindTheWay, finder, &PathFinder::findTheWay);
     connect(finder, &PathFinder::signalAddPathPoint, this, &Map::drawPathCell);
     connect(finder, &PathFinder::signalPathNotFound, this, &Map::errorPathNotFound);
+    connect(finder, &PathFinder::signalSearchstatusChanged, this, &Map::statusSearch);
     finder->moveToThread(&thread_path_finder);
     thread_path_finder.start();
     m_w = W; m_h = H;
+    emit signalGenerationStatusChanged(false);
 }
 
 void Map::drawPathCell(QPoint pathCell)
@@ -81,7 +85,6 @@ void Map::findTheWay(QPointF p_start, QPointF p_end)
 {
     if (!m_start || !m_end)
         return;
-
     finder->findTheWay(p_start, p_end);
     path_cell.resize(path.size());
     for (size_t s = 1; s < path.size()-1; s++)
@@ -109,6 +112,11 @@ void Map::clearPath()
 void Map::errorPathNotFound()
 {
     QMessageBox::information(nullptr, "Внимание!", "Не существует пути между заданными координатами");
+}
+
+void Map::statusSearch(bool in_process)
+{
+    emit signalSearchstatusChanged(in_process);
 }
 
 void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
