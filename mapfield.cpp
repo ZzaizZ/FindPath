@@ -16,6 +16,7 @@ Map::Map(int H, int W, QObject *parent) :
     m_h(H)
 {
     generateMap(m_w, m_h);
+    search_in_process = false;
 }
 
 Map::~Map()
@@ -117,18 +118,19 @@ void Map::errorPathNotFound()
 void Map::statusSearch(bool in_process)
 {
     emit signalSearchstatusChanged(in_process);
+    search_in_process = in_process;
 }
 
 void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
 {
+    if (search_in_process)
+        return;
     Cell *it = nullptr;
     switch (e->button())
     {
     case Qt::LeftButton:
         if ((it = dynamic_cast<Cell*>(itemAt(e->scenePos(),QTransform()))))
         {
-            if (!path_cell.empty())
-                clearPath();
             if (it->getType() != CellType::Wall)
             {
                 if (m_start == nullptr)
@@ -140,6 +142,8 @@ void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
                 }
                 else
                 {
+                    if (!path_cell.empty())
+                        clearPath();
                     QPointF pos = it->pos();
                     m_start->setPos(pos);
                 }
@@ -152,8 +156,6 @@ void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
     case Qt::RightButton:
         if ( (it = dynamic_cast<Cell*>(itemAt(e->scenePos(),QTransform()))) )
         {
-            if (!path_cell.empty())
-                clearPath();
             if (it->getType() != CellType::Wall)
             {
                 if (m_end == nullptr)
@@ -165,6 +167,8 @@ void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
                 }
                 else
                 {
+                    if (!path_cell.empty())
+                        clearPath();
                     QPointF pos = it->pos();
                     m_end->setPos(pos);
                 }

@@ -46,6 +46,7 @@ private:
     Cell *m_start;
     Cell *m_end;
     QThread thread_path_finder;
+    bool search_in_process;
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *e);
 signals:
