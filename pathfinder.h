@@ -32,8 +32,6 @@ private:
 
 signals:
     void signalAddCell(QPoint newCellCoord, CellType ct);
-    void signalAddWallCell(QPoint newCellCoord);
-    void signalAddPathPoint(QPoint newPoint);
     void signalPathNotFound();
     void signalBuisyChanged(bool in_process);
 };

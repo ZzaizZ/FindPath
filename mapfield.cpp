@@ -19,22 +19,21 @@ Map::Map(int H, int W, QObject *parent) :
 
     finder = new PathFinder(W, H);
     connect(this, &Map::signalGenerateMap, finder, &PathFinder::generateMap);
-    connect(this, &Map::signalFindTheWay, finder, &PathFinder::findTheWay);
-    connect(finder, &PathFinder::signalPathNotFound, this, &Map::errorPathNotFound);
-    connect(finder, &PathFinder::signalBuisyChanged, this, &Map::changeSearchStatus);
+    connect(this, &Map::signalFindTheWay, finder, &PathFinder::findTheWay);    
     connect(finder, &PathFinder::signalAddCell, this, &Map::drawMapCell);
+    connect(finder, &PathFinder::signalPathNotFound, this, &Map::errorPathNotFound);
+    connect(finder, &PathFinder::signalBuisyChanged, this, &Map::changeBuisyStatus);
     finder->moveToThread(&thread_path_finder);
     thread_path_finder.start();
 
     generateMap(m_w, m_h);
-    search_in_process = false;
+    thread_is_buisy = false;
 }
 
 Map::~Map()
 {
     thread_path_finder.quit();
-    if (finder)
-        delete finder;
+    delete finder;
 }
 
 void Map::generateMap(int W, int H)
@@ -50,9 +49,9 @@ void Map::generateMap(int W, int H)
     emit signalGenerateMap(m_w, m_h);
 }
 
-void Map::drawMapCell(QPoint mapCell, CellType ct)
+void Map::drawMapCell(QPoint mapCell, CellType cell_type)
 {
-    switch (ct)
+    switch (cell_type)
     {
     case CellType::Wall:
         map[mapCell.y()][mapCell.x()] = new WallCell(CELL_SIZE, CELL_SIZE);
@@ -88,15 +87,15 @@ void Map::errorPathNotFound()
     QMessageBox::information(nullptr, "Внимание!", "Не существует пути между заданными координатами");
 }
 
-void Map::changeSearchStatus(bool in_process)
+void Map::changeBuisyStatus(bool in_process)
 {
     emit signalBuisyChanged(in_process);
-    search_in_process = in_process;
+    thread_is_buisy = in_process;
 }
 
 void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
 {
-    if (search_in_process)
+    if (thread_is_buisy)
         return;
     Cell *it = nullptr;
     switch (e->button())

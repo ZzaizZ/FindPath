@@ -29,11 +29,10 @@ public slots:
 private slots:
     void drawMapCell(QPoint mapCell, CellType ct);
     void errorPathNotFound();
-    void changeSearchStatus(bool in_process);
+    void changeBuisyStatus(bool in_process);
 private:
-    PathFinder *finder {nullptr};
+    PathFinder *finder;
     std::vector<std::vector<Cell*>> map; // двумерный массив ячеек поля (для отрисовки)
-    std::vector<QPoint> path; // координаты ячеек пути
     std::vector<Cell*> path_cell; // ячейки пути
     int m_w, m_h; // размеры поля в клетках
     // перевод номера узла графа в координаты ячейки
@@ -42,14 +41,13 @@ private:
     Cell *m_start;
     Cell *m_end;
     QThread thread_path_finder;
-    bool search_in_process;
+    bool thread_is_buisy;
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *e);
 signals:
     void signalGenerateMap(int m_width, int m_height);
     void signalFindTheWay(QPointF start, QPointF end);
     void signalBuisyChanged(bool in_process);
-    void signalGenerationStatusChanged(bool in_process);
 };
 
 
