@@ -27,14 +27,12 @@ public:
 public slots:
     void generateMap(int W, int H);
 private slots:
-    void findTheWay(QPointF p_start, QPointF p_end);
-    void drawPathCell(QPoint pathCell);
+    void drawMapCell(QPoint mapCell, CellType ct);
     void errorPathNotFound();
     void changeSearchStatus(bool in_process);
 private:
     PathFinder *finder {nullptr};
     std::vector<std::vector<Cell*>> map; // двумерный массив ячеек поля (для отрисовки)
-    std::vector<QPoint> walls; // массив координат со стенами
     std::vector<QPoint> path; // координаты ячеек пути
     std::vector<Cell*> path_cell; // ячейки пути
     int m_w, m_h; // размеры поля в клетках
@@ -48,8 +46,9 @@ private:
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *e);
 signals:
+    void signalGenerateMap(int m_width, int m_height);
     void signalFindTheWay(QPointF start, QPointF end);
-    void signalSearchstatusChanged(bool in_process);
+    void signalBuisyChanged(bool in_process);
     void signalGenerationStatusChanged(bool in_process);
 };
 

@@ -5,6 +5,9 @@
 #include <vector>
 #include <queue>
 #include <QPoint>
+#include <QTime>
+
+#include "cell.h"
 
 #define UNDEF -1 // обозначение ещё не посещённой вершины
 #define CELL_SIZE 20
@@ -15,9 +18,11 @@ class PathFinder : public QObject
     Q_OBJECT
 
 public:
-    PathFinder(int w, int h, std::vector<QPoint> walls);
+    PathFinder(int w, int h);
 public slots:
+    void generateMap(int m_width, int m_height);
     void findTheWay(QPointF p_start, QPointF p_end);
+
 private:
     int map_width, map_height;
     std::vector<QPoint> walls;
@@ -26,9 +31,11 @@ private:
     QPoint numberToCoord(int index);
 
 signals:
+    void signalAddCell(QPoint newCellCoord, CellType ct);
+    void signalAddWallCell(QPoint newCellCoord);
     void signalAddPathPoint(QPoint newPoint);
     void signalPathNotFound();
-    void signalSearchstatusChanged(bool in_process);
+    void signalBuisyChanged(bool in_process);
 };
 
 #endif // PATHFINDER_H

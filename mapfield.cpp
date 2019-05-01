@@ -15,6 +15,17 @@ Map::Map(int H, int W, QObject *parent) :
     m_w(W),
     m_h(H)
 {
+    qRegisterMetaType<CellType>("CellType");
+
+    finder = new PathFinder(W, H);
+    connect(this, &Map::signalGenerateMap, finder, &PathFinder::generateMap);
+    connect(this, &Map::signalFindTheWay, finder, &PathFinder::findTheWay);
+    connect(finder, &PathFinder::signalPathNotFound, this, &Map::errorPathNotFound);
+    connect(finder, &PathFinder::signalBuisyChanged, this, &Map::changeSearchStatus);
+    connect(finder, &PathFinder::signalAddCell, this, &Map::drawMapCell);
+    finder->moveToThread(&thread_path_finder);
+    thread_path_finder.start();
+
     generateMap(m_w, m_h);
     search_in_process = false;
 }
@@ -28,80 +39,42 @@ Map::~Map()
 
 void Map::generateMap(int W, int H)
 {
-    emit signalGenerationStatusChanged(true);
+    clearPath();
+    clear();
+    m_w = W; m_h = H;
     m_start = nullptr;
     m_end = nullptr;
-    qsrand(QTime::currentTime().msec());
-    map.resize(H);
-    walls.clear();
-    for (size_t y = 0; y < H; y++)
-    {
-        map[y].resize(W);
-        for (size_t x = 0; x < W; x++)
-        {
-            if (rand() % 3 == 1)
-            {
-                map[y][x] = new WallCell(CELL_SIZE, CELL_SIZE);
-                map[y][x]->setPos(x*CELL_SIZE, y*CELL_SIZE);
-                this->addItem(map[y][x]);
-                walls.push_back(QPoint(x,y));
-            }
-            else
-            {
-                map[y][x] = new EmptyCell(CELL_SIZE, CELL_SIZE);
-                map[y][x]->setPos(x*CELL_SIZE, y*CELL_SIZE);
-                this->addItem(map[y][x]);
-            }
-        }
-    }
-    if (finder)
-    {
-        disconnect(this, &Map::signalFindTheWay, finder, &PathFinder::findTheWay);
-        disconnect(finder, &PathFinder::signalAddPathPoint, this, &Map::drawPathCell);
-        disconnect(finder, &PathFinder::signalPathNotFound, this, &Map::errorPathNotFound);
-        disconnect(finder, &PathFinder::signalSearchstatusChanged, this, &Map::changeSearchStatus);
-        thread_path_finder.quit();
-        delete finder;
-        finder = nullptr;
-    }
-    finder = new PathFinder(W, H, walls);
-    connect(this, &Map::signalFindTheWay, finder, &PathFinder::findTheWay);
-    connect(finder, &PathFinder::signalAddPathPoint, this, &Map::drawPathCell);
-    connect(finder, &PathFinder::signalPathNotFound, this, &Map::errorPathNotFound);
-    connect(finder, &PathFinder::signalSearchstatusChanged, this, &Map::changeSearchStatus);
-    finder->moveToThread(&thread_path_finder);
-    thread_path_finder.start();
-    m_w = W; m_h = H;
-    emit signalGenerationStatusChanged(false);
+    map.resize(m_w);
+    for (int y = 0; y < m_h; y++)
+        map[y].resize(m_w);
+    emit signalGenerateMap(m_w, m_h);
 }
 
-void Map::drawPathCell(QPoint pathCell)
+void Map::drawMapCell(QPoint mapCell, CellType ct)
 {
-    path_cell.push_back(new PathCell(CELL_SIZE, CELL_SIZE));
-    path_cell.back()->setPos(pathCell.x()*CELL_SIZE, pathCell.y()*CELL_SIZE);
-    addItem(path_cell.back());
-}
-
-void Map::findTheWay(QPointF p_start, QPointF p_end)
-{
-    if (!m_start || !m_end)
-        return;
-    finder->findTheWay(p_start, p_end);
-    path_cell.resize(path.size());
-    for (size_t s = 1; s < path.size()-1; s++)
+    switch (ct)
     {
-        QPoint wc = path[s];
-        if (s > 0 && s < path.size()-1)
-        {
-            path_cell[s] = new PathCell(CELL_SIZE, CELL_SIZE);
-            path_cell[s]->setPos(wc.x()*CELL_SIZE, wc.y()*CELL_SIZE);
-        }
-        addItem(path_cell[s]);
+    case CellType::Wall:
+        map[mapCell.y()][mapCell.x()] = new WallCell(CELL_SIZE, CELL_SIZE);
+        map[mapCell.y()][mapCell.x()]->setPos(mapCell.x()*CELL_SIZE, mapCell.y()*CELL_SIZE);
+        addItem(map[mapCell.y()][mapCell.x()]);
+        break;
+    case CellType::Empty:
+        map[mapCell.y()][mapCell.x()] = new EmptyCell(CELL_SIZE, CELL_SIZE);
+        map[mapCell.y()][mapCell.x()]->setPos(mapCell.x()*CELL_SIZE, mapCell.y()*CELL_SIZE);
+        addItem(map[mapCell.y()][mapCell.x()]);
+        break;
+    case CellType::Path:
+        path_cell.push_back(new PathCell(CELL_SIZE, CELL_SIZE));
+        path_cell.back()->setPos(mapCell.x()*CELL_SIZE, mapCell.y()*CELL_SIZE);
+        addItem(path_cell.back());
+        break;
+    default:
+        break;
     }
 }
 
 // стирает текущий путь
-// кроме точек старта и финиша
 void Map::clearPath()
 {
     for (int s = 0; s < path_cell.size(); s++)
@@ -117,7 +90,7 @@ void Map::errorPathNotFound()
 
 void Map::changeSearchStatus(bool in_process)
 {
-    emit signalSearchstatusChanged(in_process);
+    emit signalBuisyChanged(in_process);
     search_in_process = in_process;
 }
 

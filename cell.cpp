@@ -3,7 +3,8 @@
 Cell::Cell(double h, double w) :
     c_height(h),
     c_width(w)
-{}
+{
+}
 
 QRectF Cell::boundingRect() const
 {

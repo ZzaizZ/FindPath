@@ -1,11 +1,33 @@
 #include "pathfinder.h"
 
-PathFinder::PathFinder(int w, int h, std::vector<QPoint> walls) :
+PathFinder::PathFinder(int w, int h) :
     map_width(w),
-    map_height(h),
-    walls(walls)
+    map_height(h)
 {
+}
+
+void PathFinder::generateMap(int m_width, int m_height)
+{
+    emit signalBuisyChanged(false);
+    map_width = m_width;
+    map_height = m_height;
+    qsrand(QTime::currentTime().msec());
+    walls.clear();
+    for (size_t y = 0; y < map_height; y++)
+    {
+        for (size_t x = 0; x < map_width; x++)
+        {
+            if (rand() % 3 == 1)
+            {
+                emit signalAddCell(QPoint(x, y), CellType::Wall);
+                walls.push_back(QPoint(x,y));
+            }
+            else
+                emit signalAddCell(QPoint(x, y), CellType::Empty);
+        }
+    }
     getAdjMatrix();
+    emit signalBuisyChanged(false);
 }
 
 QPoint PathFinder::numberToCoord(int index)
@@ -65,7 +87,7 @@ void PathFinder::getAdjMatrix()
 
 void PathFinder::findTheWay(QPointF p_start, QPointF p_end)
 {
-    emit signalSearchstatusChanged(true);
+    emit signalBuisyChanged(true);
     QPoint pint_start(p_start.x()/CELL_SIZE, p_start.y()/CELL_SIZE);
     QPoint pint_end(p_end.x()/CELL_SIZE, p_end.y()/CELL_SIZE);
     int n_start = pint_start.y()*(map_width) + pint_start.x();
@@ -102,11 +124,11 @@ void PathFinder::findTheWay(QPointF p_start, QPointF p_end)
         current = came_from[current];
         while (current != n_start)
         {
-            emit signalAddPathPoint(numberToCoord(current));
+            emit signalAddCell(numberToCoord(current), CellType::Path);
             current = came_from[current];
         }
     }
     else
         emit signalPathNotFound();
-    emit signalSearchstatusChanged(false);
+    emit signalBuisyChanged(false);
 }

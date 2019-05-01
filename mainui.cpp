@@ -33,8 +33,7 @@ MainUI::MainUI(QWidget *parent) :
     }
     scale_factor_step = 0.1;
     map_scene = new Map(ui->led_H->text().toInt(), ui->led_W->text().toInt(), nullptr);
-    connect(map_scene, &Map::signalGenerationStatusChanged, this, &MainUI::switchActiveButtons);
-    connect(map_scene, &Map::signalSearchstatusChanged, this, &MainUI::switchActiveButtons);
+    connect(map_scene, &Map::signalBuisyChanged, this, &MainUI::switchActiveButtons);
     ui->grv_Map->setScene(map_scene);
     QIntValidator coord_valid(2, 5000);
     ui->led_H->setValidator(&coord_valid);
