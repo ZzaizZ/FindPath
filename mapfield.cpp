@@ -59,7 +59,7 @@ void Map::generateMap(int W, int H)
         disconnect(this, &Map::signalFindTheWay, finder, &PathFinder::findTheWay);
         disconnect(finder, &PathFinder::signalAddPathPoint, this, &Map::drawPathCell);
         disconnect(finder, &PathFinder::signalPathNotFound, this, &Map::errorPathNotFound);
-        disconnect(finder, &PathFinder::signalSearchstatusChanged, this, &Map::statusSearch);
+        disconnect(finder, &PathFinder::signalSearchstatusChanged, this, &Map::changeSearchStatus);
         thread_path_finder.quit();
         delete finder;
         finder = nullptr;
@@ -68,7 +68,7 @@ void Map::generateMap(int W, int H)
     connect(this, &Map::signalFindTheWay, finder, &PathFinder::findTheWay);
     connect(finder, &PathFinder::signalAddPathPoint, this, &Map::drawPathCell);
     connect(finder, &PathFinder::signalPathNotFound, this, &Map::errorPathNotFound);
-    connect(finder, &PathFinder::signalSearchstatusChanged, this, &Map::statusSearch);
+    connect(finder, &PathFinder::signalSearchstatusChanged, this, &Map::changeSearchStatus);
     finder->moveToThread(&thread_path_finder);
     thread_path_finder.start();
     m_w = W; m_h = H;
@@ -115,7 +115,7 @@ void Map::errorPathNotFound()
     QMessageBox::information(nullptr, "Внимание!", "Не существует пути между заданными координатами");
 }
 
-void Map::statusSearch(bool in_process)
+void Map::changeSearchStatus(bool in_process)
 {
     emit signalSearchstatusChanged(in_process);
     search_in_process = in_process;

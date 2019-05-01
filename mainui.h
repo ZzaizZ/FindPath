@@ -28,7 +28,6 @@ private:
     Ui::MainUI *ui;
     Map *map_scene;
     QSettings *settings;
-    QThread thread_map;
     double scale_factor_step;
     bool verifyInput();
     void wheelEvent(QWheelEvent *we);

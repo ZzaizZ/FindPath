@@ -70,8 +70,6 @@ void MainUI::on_btn_Generate_clicked()
 {
     if (!verifyInput())
         return;
-//    ui->btn_Generate->setEnabled(false);
-    map_scene->clear();
     map_scene->generateMap(ui->led_W->text().toInt(), ui->led_H->text().toInt());
     ui->grv_Map->setSceneRect(-CELL_SIZE, -CELL_SIZE,
                               ui->led_W->text().toInt()*CELL_SIZE+CELL_SIZE, ui->led_H->text().toInt()*CELL_SIZE+CELL_SIZE);
@@ -109,6 +107,7 @@ void MainUI::on_btn_Help_clicked()
 ЛКМ - установка начальной точки маршрута\n\
 ПКМ - установка конечной точки маршрута\n\
 Ctrl + колёсико мыши (прокрутка) - масштабирование поля\n\
-Колёсико мыши (клик) - установка стандартного размера";
+Колёсико мыши (клик) - установка стандартного размера\n\n\
+Максимальный размер поля - 100х100";
     QMessageBox::information(nullptr, "Помощь", help_text);
 }
