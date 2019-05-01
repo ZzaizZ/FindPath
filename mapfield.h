@@ -27,7 +27,7 @@ public:
 public slots:
     void generateMap(int W, int H);
 private slots:
-    void drawMapCell(QPoint mapCell, CellType ct);
+    void drawMapCell(QPoint mapCell, CellType cell_type);
     void errorPathNotFound();
     void changeBuisyStatus(bool in_process);
 private:

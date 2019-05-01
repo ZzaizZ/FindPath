@@ -43,7 +43,7 @@ void Map::generateMap(int W, int H)
     m_w = W; m_h = H;
     m_start = nullptr;
     m_end = nullptr;
-    map.resize(m_w);
+    map.resize(m_h);
     for (int y = 0; y < m_h; y++)
         map[y].resize(m_w);
     emit signalGenerateMap(m_w, m_h);

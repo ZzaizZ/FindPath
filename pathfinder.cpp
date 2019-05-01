@@ -92,6 +92,11 @@ void PathFinder::findTheWay(QPointF p_start, QPointF p_end)
     QPoint pint_end(p_end.x()/CELL_SIZE, p_end.y()/CELL_SIZE);
     int n_start = pint_start.y()*(map_width) + pint_start.x();
     int n_end = pint_end.y()*(map_width) + pint_end.x();
+    if (n_start == n_end)
+    {
+        emit signalBuisyChanged(false);
+        return;
+    }
     std::vector<int> came_from(map_width*map_height, UNDEF);
     std::queue<int> q;
     q.push(n_start);
@@ -117,9 +122,7 @@ void PathFinder::findTheWay(QPointF p_start, QPointF p_end)
     }
 
     if (path_exists)
-    {
-        if (n_start == n_end)
-            return;
+    {        
         int current = n_end;
         current = came_from[current];
         while (current != n_start)
