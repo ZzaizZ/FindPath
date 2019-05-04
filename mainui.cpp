@@ -6,7 +6,9 @@
 #include <QMessageBox>
 #include <QValidator>
 
-// TODO: Fix size error
+#include <QThread>
+
+
 
 MainUI::MainUI(QWidget *parent) :
     QWidget(parent),
@@ -30,7 +32,8 @@ MainUI::MainUI(QWidget *parent) :
         ui->led_W->setText("10");
     }
     scale_factor_step = 0.1;
-    map_scene = new Map(ui->led_H->text().toInt(), ui->led_W->text().toInt(), ui->grv_Map);
+    map_scene = new Map(ui->led_H->text().toInt(), ui->led_W->text().toInt(), nullptr);
+    connect(map_scene, &Map::signalBuisyChanged, this, &MainUI::switchActiveButtons);
     ui->grv_Map->setScene(map_scene);
     QIntValidator coord_valid(2, 5000);
     ui->led_H->setValidator(&coord_valid);
@@ -66,11 +69,17 @@ void MainUI::on_btn_Generate_clicked()
 {
     if (!verifyInput())
         return;
-    map_scene->clear();
     map_scene->generateMap(ui->led_W->text().toInt(), ui->led_H->text().toInt());
-    ui->grv_Map->setSceneRect(0, 0,
-                              ui->led_W->text().toInt()*20, ui->led_H->text().toInt()*20);
-    map_scene->FindTheWay(QPoint(0,0), QPoint(ui->led_H->text().toInt()-1, ui->led_W->text().toInt()-1));
+    ui->grv_Map->setSceneRect(-CELL_SIZE, -CELL_SIZE,
+                              ui->led_W->text().toInt()*CELL_SIZE+CELL_SIZE, ui->led_H->text().toInt()*CELL_SIZE+CELL_SIZE);
+}
+
+void MainUI::switchActiveButtons(bool in_process)
+{
+    if (in_process)
+        ui->btn_Generate->setEnabled(false);
+    else
+        ui->btn_Generate->setEnabled(true);
 }
 
 void MainUI::wheelEvent(QWheelEvent *we)
@@ -97,6 +106,7 @@ void MainUI::on_btn_Help_clicked()
 ЛКМ - установка начальной точки маршрута\n\
 ПКМ - установка конечной точки маршрута\n\
 Ctrl + колёсико мыши (прокрутка) - масштабирование поля\n\
-Колёсико мыши (клик) - установка стандартного размера";
+Колёсико мыши (клик) - установка стандартного размера\n\n\
+Максимальный размер поля - 100х100";
     QMessageBox::information(nullptr, "Помощь", help_text);
 }

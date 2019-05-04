@@ -28,12 +28,14 @@ SOURCES += \
         main.cpp \
         mainui.cpp \
     mapfield.cpp \
-    cell.cpp
+    cell.cpp \
+    pathfinder.cpp
 
 HEADERS += \
         mainui.h \
     mapfield.h \
-    cell.h
+    cell.h \
+    pathfinder.h
 
 FORMS += \
         mainui.ui

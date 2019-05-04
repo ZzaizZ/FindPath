@@ -9,8 +9,7 @@ enum class CellType
 {
     Empty,
     Wall,
-    Start,
-    End,
+    Text,
     Path
 };
 
@@ -23,7 +22,6 @@ protected:
     virtual QRectF boundingRect() const;
     double c_height, c_width;
     CellType c_type;
-    QPoint pos_on_map;
 };
 
 class EmptyCell : public Cell

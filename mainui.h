@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QWheelEvent>
 #include <QSettings>
+#include <QThread>
 #include "mapfield.h"
 
 namespace Ui {
@@ -20,8 +21,8 @@ public:
 
 private slots:
     void on_btn_Generate_clicked();
-
     void on_btn_Help_clicked();
+    void switchActiveButtons(bool in_process);
 
 private:
     Ui::MainUI *ui;

@@ -5,39 +5,49 @@
 #include <QGraphicsScene>
 #include <QGraphicsItem>
 #include <QPainter>
+#include <QObject>
 #include <QGraphicsSceneMouseEvent>
 #include <vector>
 #include <queue>
 
-#include "cell.h"
+#include <QFutureWatcher>
+#include <QtConcurrent/QtConcurrent>
 
-#define UNDEF -1 // обозначение ещё не посещённой вершины
-#define CELL_SIZE 20
+#include "cell.h"
+#include "pathfinder.h"
 
 class Map : public QGraphicsScene
 {
+
+    Q_OBJECT
+
 public:
     Map(int H, int W, QObject *parent);
     ~Map();
+public slots:
     void generateMap(int W, int H);
-    void FindTheWay(QPointF p_start, QPointF p_end);
+private slots:
+    void drawMapCell(QPoint mapCell, CellType cell_type);
+    void errorPathNotFound();
+    void changeBuisyStatus(bool in_process);
 private:
+    PathFinder *finder;
     std::vector<std::vector<Cell*>> map; // двумерный массив ячеек поля (для отрисовки)
-    std::vector<QPoint> walls; // массив координат со стенами
-    std::vector<std::vector<int>> adj_matrix; // матрица инциденции для поля
-    std::vector<QPoint> path; // номера ячеек пути
     std::vector<Cell*> path_cell; // ячейки пути
     int m_w, m_h; // размеры поля в клетках
-    // генерация матрицы инциденции для полученного поля
-    void GetAdjMatrix(int W, int H, std::vector<QPoint> walls);
     // перевод номера узла графа в координаты ячейки
     QPoint NumberToCoord(int index, int W, int H);
-    std::vector<QPoint> BestPath(int n, int v_start, int v_end); // поиск в ширину
-    void ClearPath(); // очистка вектора ячеек пути
+    void clearPath(); // очистка вектора ячеек пути
     Cell *m_start;
     Cell *m_end;
+    QThread thread_path_finder;
+    bool thread_is_buisy;
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *e);
+signals:
+    void signalGenerateMap(int m_width, int m_height);
+    void signalFindTheWay(QPointF start, QPointF end);
+    void signalBuisyChanged(bool in_process);
 };
 
 

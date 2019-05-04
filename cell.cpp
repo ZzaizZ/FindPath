@@ -3,7 +3,8 @@
 Cell::Cell(double h, double w) :
     c_height(h),
     c_width(w)
-{}
+{
+}
 
 QRectF Cell::boundingRect() const
 {
@@ -39,7 +40,7 @@ void WallCell::paint(QPainter *paint, const QStyleOptionGraphicsItem*, QWidget*)
 TextCell::TextCell(double h, double w, QString text) :
     PathCell(h, w)
 {
-    c_type = CellType::Start;
+    c_type = CellType::Text;
     this->text = text;
 }
 
