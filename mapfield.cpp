@@ -2,12 +2,9 @@
 
 #include <QGraphicsEllipseItem>
 
-#include <stdio.h>
 #include <QMessageBox>
 #include <QTime>
 #include <QThread>
-
-#include <QDebug>
 
 
 Map::Map(int H, int W, QObject *parent) :
@@ -33,8 +30,9 @@ Map::Map(int H, int W, QObject *parent) :
 
 Map::~Map()
 {
-    if (thread_path_finder->isRunning())
-        thread_path_finder->quit();
+    thread_path_finder->quit();
+    thread_path_finder->wait();
+    delete thread_path_finder;
     delete finder;
 }
 
@@ -45,9 +43,6 @@ void Map::generateMap(int W, int H)
     m_w = W; m_h = H;
     m_start = nullptr;
     m_end = nullptr;
-    map.resize(m_h);
-    for (int y = 0; y < m_h; y++)
-        map[y].resize(m_w);
     emit signalGenerateMap(m_w, m_h);
 }
 
@@ -56,17 +51,13 @@ void Map::drawMapCell(QPoint mapCell, CellType cell_type)
     switch (cell_type)
     {
     case CellType::Wall:
-        map[mapCell.y()][mapCell.x()] = new WallCell(CELL_SIZE, CELL_SIZE);
-        map[mapCell.y()][mapCell.x()]->setPos(mapCell.x()*CELL_SIZE, mapCell.y()*CELL_SIZE);
-        addItem(map[mapCell.y()][mapCell.x()]);
+        addItem(new WallCell(CELL_SIZE, CELL_SIZE, mapCell.x()*CELL_SIZE, mapCell.y()*CELL_SIZE));
         break;
     case CellType::Empty:
-        map[mapCell.y()][mapCell.x()] = new EmptyCell(CELL_SIZE, CELL_SIZE);
-        map[mapCell.y()][mapCell.x()]->setPos(mapCell.x()*CELL_SIZE, mapCell.y()*CELL_SIZE);
-        addItem(map[mapCell.y()][mapCell.x()]);
+        addItem(new EmptyCell(CELL_SIZE, CELL_SIZE, mapCell.x()*CELL_SIZE, mapCell.y()*CELL_SIZE));
         break;
     case CellType::Path:
-        path_cell.push_back(new PathCell(CELL_SIZE, CELL_SIZE));
+        path_cell.push_back(new PathCell(CELL_SIZE, CELL_SIZE, mapCell.x()*CELL_SIZE, mapCell.y()*CELL_SIZE));
         path_cell.back()->setPos(mapCell.x()*CELL_SIZE, mapCell.y()*CELL_SIZE);
         addItem(path_cell.back());
         break;
@@ -78,8 +69,11 @@ void Map::drawMapCell(QPoint mapCell, CellType cell_type)
 // стирает текущий путь
 void Map::clearPath()
 {
-    for (int s = 0; s < path_cell.size(); s++)
+    for (size_t s = 0; s < path_cell.size(); s++)
+    {
         removeItem(path_cell[s]);
+        delete path_cell[s];
+    }
     path_cell.clear();
     update();
 }
@@ -110,7 +104,7 @@ void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
                 if (m_start == nullptr)
                 {
                     QPointF pos = it->pos();
-                    m_start = new TextCell(CELL_SIZE, CELL_SIZE, "A");
+                    m_start = new TextCell(CELL_SIZE, CELL_SIZE, pos.x(), pos.y(), "A");
                     m_start->setPos(pos);
                     addItem(m_start);
                 }
@@ -135,7 +129,7 @@ void Map::mousePressEvent(QGraphicsSceneMouseEvent *e)
                 if (m_end == nullptr)
                 {
                     QPointF pos = it->pos();
-                    m_end = new TextCell(CELL_SIZE, CELL_SIZE, "B");
+                    m_end = new TextCell(CELL_SIZE, CELL_SIZE, pos.x(), pos.y(), "B");
                     m_end->setPos(pos);
                     addItem(m_end);
                 }

@@ -10,9 +10,6 @@
 #include <vector>
 #include <queue>
 
-#include <QFutureWatcher>
-#include <QtConcurrent/QtConcurrent>
-
 #include "cell.h"
 #include "pathfinder.h"
 
@@ -32,15 +29,13 @@ private slots:
     void changeBuisyStatus(bool in_process);
 private:
     PathFinder *finder;
-    std::vector<std::vector<Cell*>> map; // двумерный массив ячеек поля (для отрисовки)
     std::vector<Cell*> path_cell; // ячейки пути
     int m_w, m_h; // размеры поля в клетках
-    // перевод номера узла графа в координаты ячейки
     void clearPath(); // очистка вектора ячеек пути
-    Cell *m_start;
-    Cell *m_end;
-    QThread *thread_path_finder;
-    bool thread_is_buisy;
+    Cell *m_start; // стартовая ячейка пути
+    Cell *m_end; // конечная ячейка пути
+    QThread *thread_path_finder; // поток для генерации карты и поиска пути
+    bool thread_is_buisy; // происходит ли сейчас расчёт
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *e);
 signals:

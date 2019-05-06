@@ -8,25 +8,57 @@ PathFinder::PathFinder(int w, int h) :
 
 void PathFinder::generateMap(int m_width, int m_height)
 {
-    emit signalBuisyChanged(false);
+    emit signalBuisyChanged(true);
     map_width = m_width;
     map_height = m_height;
     qsrand(QTime::currentTime().msec());
-    walls.clear();
+
+    size_t nodes_n = map_width*map_height;
+    adj_matrix.resize(nodes_n);
+    for (size_t cur_node = 0; cur_node < nodes_n; cur_node++)
+    {
+        adj_matrix[cur_node].resize(nodes_n);
+        std::fill(adj_matrix[cur_node].begin(), adj_matrix[cur_node].end(), 0);
+    }
+
+    bool** tmp_wall = new bool*[map_height];
     for (size_t y = 0; y < map_height; y++)
     {
+        tmp_wall[y] = new bool[map_width];
         for (size_t x = 0; x < map_width; x++)
         {
+            tmp_wall[y][x] = false;
+            QPoint current(x, y);
+            size_t number_left = coordToNumber(QPoint(x-1, y)),
+                    number_top = coordToNumber(QPoint (x, y-1)),
+                    number_current = coordToNumber(current);
             if (rand() % 3 == 1)
             {
-                emit signalAddCell(QPoint(x, y), CellType::Wall);
-                walls.push_back(QPoint(x,y));
+                emit signalAddCell(current, CellType::Wall);
+                tmp_wall[y][x] = true;
             }
             else
-                emit signalAddCell(QPoint(x, y), CellType::Empty);
+            {
+                emit signalAddCell(current, CellType::Empty);
+                tmp_wall[y][x] = false;
+                // установка связей между вершинами графа
+                if (x != 0 && !tmp_wall[y][x-1])
+                {
+                    adj_matrix[number_current][number_left] = 1;
+                    adj_matrix[number_left][number_current] = 1;
+                }
+                if (y != 0 && !tmp_wall[y-1][x])
+                {
+                    adj_matrix[number_current][number_top] = 1;
+                    adj_matrix[number_top][number_current] = 1;
+                }
+            }
+
         }
     }
-    getAdjMatrix();
+    for (size_t y = 0; y < map_height; y++)
+        delete[] tmp_wall[y];
+    delete[] tmp_wall;
     emit signalBuisyChanged(false);
 }
 
@@ -37,52 +69,9 @@ QPoint PathFinder::numberToCoord(int index)
     return QPoint(index%map_width, index/map_width);
 }
 
-void PathFinder::getAdjMatrix()
+size_t PathFinder::coordToNumber(QPoint point)
 {
-    size_t nodes_n = map_width*map_height;
-    adj_matrix.resize(nodes_n);
-    for (size_t cur_node = 0; cur_node < nodes_n; cur_node++)
-    {
-        adj_matrix[cur_node].resize(nodes_n);
-        std::fill(adj_matrix[cur_node].begin(), adj_matrix[cur_node].end(), 0);
-    }
-    // генерация марицы инциденции для поля без препятствий
-    for (size_t y = 0; y < map_height; y++)
-        for (size_t x = 0; x < map_width; x++)
-        {
-            if (x != 0)
-                adj_matrix[y*map_width + x][y*map_width + x-1] = 1;
-            if (x != map_width-1)
-                adj_matrix[y*map_width + x][y*map_width + x+1] = 1;
-            if (y != 0)
-                adj_matrix[y*map_width + x][(y-1)*map_width + x] = 1;
-            if (y < map_height-1)
-                adj_matrix[y*map_width + x][(y+1)*map_width + x] = 1;
-        }
-    // затираем связи между обычными узлами и узлами-стенами
-    for (QPoint wall : walls)
-    {
-        if (wall.x() != 0)
-        {
-            adj_matrix[wall.y()*map_width + wall.x()][wall.y()*map_width + wall.x()-1] = 0;
-            adj_matrix[wall.y()*map_width + wall.x()-1][wall.y()*map_width + wall.x()] = 0;
-        }
-        if (wall.x() != map_width-1)
-        {
-            adj_matrix[wall.y()*map_width + wall.x()][wall.y()*map_width + wall.x()+1] = 0;
-            adj_matrix[wall.y()*map_width + wall.x()+1][wall.y()*map_width + wall.x()] = 0;
-        }
-        if (wall.y() != 0)
-        {
-            adj_matrix[wall.y()*map_width + wall.x()][(wall.y()-1)*map_width + wall.x()] = 0;
-            adj_matrix[(wall.y()-1)*map_width + wall.x()][wall.y()*map_width + wall.x()] = 0;
-        }
-        if (wall.y() < map_height-1)
-        {
-            adj_matrix[wall.y()*map_width + wall.x()][(wall.y()+1)*map_width + wall.x()] = 0;
-            adj_matrix[(wall.y()+1)*map_width + wall.x()][wall.y()*map_width + wall.x()] = 0;
-        }
-    }
+    return point.y() * map_width + point.x();
 }
 
 void PathFinder::findTheWay(QPointF p_start, QPointF p_end)
