@@ -75,10 +75,7 @@ void MainUI::on_btn_Generate_clicked()
 
 void MainUI::switchActiveButtons(bool in_process)
 {
-    if (in_process)
-        ui->btn_Generate->setEnabled(false);
-    else
-        ui->btn_Generate->setEnabled(true);
+    ui->btn_Generate->setEnabled(!in_process);
 }
 
 void MainUI::wheelEvent(QWheelEvent *we)

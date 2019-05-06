@@ -28,7 +28,7 @@ private slots:
     void errorPathNotFound();
     void changeBuisyStatus(bool in_process);
 private:
-    PathFinder *finder;
+    PathFinder *finder; // объект для поиска пути и генерации карты
     std::vector<Cell*> path_cell; // ячейки пути
     int m_w, m_h; // размеры поля в клетках
     void clearPath(); // очистка вектора ячеек пути
@@ -39,9 +39,9 @@ private:
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *e);
 signals:
-    void signalGenerateMap(int m_width, int m_height);
-    void signalFindTheWay(QPointF start, QPointF end);
-    void signalBuisyChanged(bool in_process);
+    void signalGenerateMap(int m_width, int m_height); // сигнал для вызова слота генерации карты в PathFinder
+    void signalFindTheWay(QPointF start, QPointF end); // сигнал для вызова слота поиска пути в PathFinder
+    void signalBuisyChanged(bool in_process); // сигнал отслеживания статуса работы потока PathFinder
 };
 
 

@@ -14,7 +14,7 @@ Map::Map(int H, int W, QObject *parent) :
 {
     qRegisterMetaType<CellType>("CellType");
 
-    finder = new PathFinder(W, H);
+    finder = new PathFinder();
     connect(this, &Map::signalGenerateMap, finder, &PathFinder::generateMap);
     connect(this, &Map::signalFindTheWay, finder, &PathFinder::findTheWay);    
     connect(finder, &PathFinder::signalAddCell, this, &Map::drawMapCell);

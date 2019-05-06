@@ -18,7 +18,7 @@ class PathFinder : public QObject
     Q_OBJECT
 
 public:
-    PathFinder(int w, int h);
+    PathFinder();
 public slots:
     void generateMap(int m_width, int m_height);
     void findTheWay(QPointF p_start, QPointF p_end);

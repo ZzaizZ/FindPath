@@ -1,10 +1,7 @@
 #include "pathfinder.h"
 
-PathFinder::PathFinder(int w, int h) :
-    map_width(w),
-    map_height(h)
-{
-}
+PathFinder::PathFinder()
+{}
 
 void PathFinder::generateMap(int m_width, int m_height)
 {
@@ -53,7 +50,6 @@ void PathFinder::generateMap(int m_width, int m_height)
                     adj_matrix[number_top][number_current] = 1;
                 }
             }
-
         }
     }
     for (size_t y = 0; y < map_height; y++)
