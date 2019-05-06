@@ -36,11 +36,10 @@ private:
     std::vector<Cell*> path_cell; // ячейки пути
     int m_w, m_h; // размеры поля в клетках
     // перевод номера узла графа в координаты ячейки
-    QPoint NumberToCoord(int index, int W, int H);
     void clearPath(); // очистка вектора ячеек пути
     Cell *m_start;
     Cell *m_end;
-    QThread thread_path_finder;
+    QThread *thread_path_finder;
     bool thread_is_buisy;
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *e);

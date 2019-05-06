@@ -5,6 +5,7 @@
 #include <QWheelEvent>
 #include <QSettings>
 #include <QThread>
+#include <QValidator>
 #include "mapfield.h"
 
 namespace Ui {
@@ -28,6 +29,7 @@ private:
     Ui::MainUI *ui;
     Map *map_scene;
     QSettings *settings;
+    QIntValidator *coord_valid;
     double scale_factor_step;
     bool verifyInput();
     void wheelEvent(QWheelEvent *we);

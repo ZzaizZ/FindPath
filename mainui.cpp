@@ -4,9 +4,6 @@
 #include <stdio.h>
 #include <QScreen>
 #include <QMessageBox>
-#include <QValidator>
-
-#include <QThread>
 
 
 
@@ -25,19 +22,21 @@ MainUI::MainUI(QWidget *parent) :
     resize(settings->value("window/width", 700).toInt(),
             settings->value("window/height", 400).toInt());
     ui->led_W->setText(settings->value("map/x_cell", 10).toString());
-    ui->led_H->setText(settings->value("map/y_cell", 10).toString());
+    ui->led_H->setText(settings->value("map/y_cell", 10).toString());    
+    coord_valid = new QIntValidator(2, 100);
+    ui->led_H->setValidator(coord_valid);
+    ui->led_W->setValidator(coord_valid);
     if (!verifyInput())
     {
         ui->led_H->setText("10");
         ui->led_W->setText("10");
     }
-    scale_factor_step = 0.1;
+    scale_factor_step = 0.1;    
     map_scene = new Map(ui->led_H->text().toInt(), ui->led_W->text().toInt(), nullptr);
     connect(map_scene, &Map::signalBuisyChanged, this, &MainUI::switchActiveButtons);
     ui->grv_Map->setScene(map_scene);
-    QIntValidator coord_valid(2, 5000);
-    ui->led_H->setValidator(&coord_valid);
-    ui->led_W->setValidator(&coord_valid);
+    ui->grv_Map->setSceneRect(-CELL_SIZE, -CELL_SIZE,
+                              ui->led_W->text().toInt()*CELL_SIZE+CELL_SIZE, ui->led_H->text().toInt()*CELL_SIZE+CELL_SIZE);
 }
 
 MainUI::~MainUI()
@@ -50,16 +49,16 @@ MainUI::~MainUI()
     settings->setValue("map/y_cell", ui->led_H->text());
     settings->sync();
     delete settings;
+    delete coord_valid;
     delete map_scene;
     delete ui;
 }
 
 bool MainUI::verifyInput()
 {
-    if ((ui->led_H->text().toInt() * ui->led_W->text().toInt() > 10000) ||
-            (ui->led_H->text().toInt() < 2 && ui->led_W->text().toInt() < 2))
+    if (!ui->led_H->hasAcceptableInput() || !ui->led_W->hasAcceptableInput())
     {
-        QMessageBox::critical(nullptr, "Ошибка!", "Ошибка задания размера поля!\n Размеры поля не должны превышать 100х100!");
+        QMessageBox::critical(nullptr, "Ошибка!", "Ошибка задания размера поля!\n Размеры поля должны быть минимум 2x2 и не должны превышать 100х100!");
         return false;
     }
     return true;
@@ -107,6 +106,7 @@ void MainUI::on_btn_Help_clicked()
 ПКМ - установка конечной точки маршрута\n\
 Ctrl + колёсико мыши (прокрутка) - масштабирование поля\n\
 Колёсико мыши (клик) - установка стандартного размера\n\n\
+Минимальный размер поля - 2х2\n\
 Максимальный размер поля - 100х100";
     QMessageBox::information(nullptr, "Помощь", help_text);
 }
