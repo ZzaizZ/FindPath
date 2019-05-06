@@ -25,10 +25,9 @@ public slots:
 
 private:
     int map_width, map_height;
-    std::vector<QPoint> walls;
-    std::vector<std::vector<int>> adj_matrix; // матрица инциденции для поля
-    void getAdjMatrix();
+    std::vector<std::vector<int>> adj_matrix; // матрица смежности для поля
     QPoint numberToCoord(int index);
+    size_t coordToNumber(QPoint point);
 
 signals:
     void signalAddCell(QPoint newCellCoord, CellType ct);

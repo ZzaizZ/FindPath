@@ -16,7 +16,7 @@ enum class CellType
 class Cell : public QGraphicsItem
 {
 public:
-    Cell(double h, double w);
+    Cell(double h, double w, int x, int y);
     CellType getType() { return c_type; }
 protected:
     virtual QRectF boundingRect() const;
@@ -27,7 +27,7 @@ protected:
 class EmptyCell : public Cell
 {
 public:
-    EmptyCell(double h, double w);
+    EmptyCell(double h, double w, int x, int y);
 protected:
     virtual void paint(QPainter *paint, const QStyleOptionGraphicsItem*, QWidget*);
 };
@@ -35,7 +35,7 @@ protected:
 class WallCell : public Cell
 {
 public:
-    WallCell(double h, double w);
+    WallCell(double h, double w, int x, int y);
 protected:
     virtual void paint(QPainter *paint, const QStyleOptionGraphicsItem*, QWidget*);
 };
@@ -43,7 +43,7 @@ protected:
 class PathCell : public Cell
 {
 public:
-    PathCell(double h, double w);
+    PathCell(double h, double w, int x, int y);
 protected:
     virtual void paint(QPainter *paint, const QStyleOptionGraphicsItem*, QWidget*);
 };
@@ -51,7 +51,7 @@ protected:
 class TextCell : public PathCell
 {
 public:
-    TextCell(double h, double w, QString text);
+    TextCell(double h, double w, int x, int y, QString text);
 protected:
     QString text;
     virtual void paint(QPainter *paint, const QStyleOptionGraphicsItem*p, QWidget*w);
